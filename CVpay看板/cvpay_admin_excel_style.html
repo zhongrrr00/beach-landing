@@ -1,0 +1,823 @@
+<style>
+  * { box-sizing: border-box; }
+  .twalk-app { display: flex; height: 100vh; background: #F5F7FA; font-family: '微软雅黑', -apple-system, 'PingFang SC', Arial, sans-serif; font-size: 13px; color: #1F2937; overflow: hidden; }
+
+  /* Sidebar */
+  .twalk-sidebar { width: 220px; background: #FFFFFF; border-right: 1px solid #E5E7EB; display: flex; flex-direction: column; flex-shrink: 0; }
+  .twalk-logo { padding: 18px 20px; font-size: 18px; font-weight: 600; color: #1F2937; letter-spacing: 1px; }
+  .twalk-search { padding: 0 14px 12px; }
+  .twalk-search input { width: 100%; padding: 7px 10px 7px 30px; font-size: 12px; border: 1px solid #E5E7EB; border-radius: 4px; background: #FFFFFF url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%239CA3AF' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E") no-repeat 9px center; outline: none; color: #374151; }
+  .twalk-search input::placeholder { color: #9CA3AF; }
+  .twalk-menu { flex: 1; overflow-y: auto; padding: 4px 0 12px; }
+  .twalk-menu-group { margin-bottom: 2px; }
+  .twalk-menu-group-title { padding: 8px 20px; font-size: 12px; font-weight: 600; color: #6B7280; cursor: pointer; display: flex; align-items: center; justify-content: space-between; }
+  .twalk-menu-group-title:hover { color: #1F2937; }
+  .twalk-menu-group-title .arrow { transition: transform 0.2s; font-size: 10px; color: #9CA3AF; }
+  .twalk-menu-group.collapsed .arrow { transform: rotate(-90deg); }
+  .twalk-menu-group.collapsed .twalk-menu-items { display: none; }
+  .twalk-menu-item { padding: 7px 20px 7px 36px; font-size: 12.5px; color: #4B5563; cursor: pointer; position: relative; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .twalk-menu-item:hover { color: #1F2937; background: #F9FAFB; }
+  .twalk-menu-item::before { content: ''; position: absolute; left: 22px; top: 50%; width: 4px; height: 4px; border-radius: 50%; background: #D1D5DB; transform: translateY(-50%); }
+  .twalk-menu-item.active { background: #EFF6FF; color: #2563EB; font-weight: 500; }
+  .twalk-menu-item.active::before { background: #2563EB; }
+  .twalk-user { border-top: 1px solid #E5E7EB; padding: 12px 16px; display: flex; align-items: center; gap: 8px; font-size: 12px; color: #4B5563; }
+  .twalk-user .avatar { width: 24px; height: 24px; border-radius: 50%; background: #E5E7EB; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #6B7280; flex-shrink: 0; }
+  .twalk-user .uname { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* Main */
+  .twalk-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .twalk-tabs-bar { display: flex; padding: 8px 12px 0; background: #F5F7FA; border-bottom: 1px solid #E5E7EB; align-items: flex-end; }
+  .twalk-tab { padding: 7px 14px 7px 14px; font-size: 12.5px; background: #FFFFFF; border: 1px solid #E5E7EB; border-bottom: none; margin-right: 4px; color: #6B7280; cursor: pointer; border-radius: 4px 4px 0 0; display: flex; align-items: center; gap: 8px; }
+  .twalk-tab.active { color: #2563EB; font-weight: 500; }
+  .twalk-tab .close { color: #D1D5DB; font-size: 14px; }
+  .twalk-tab .close:hover { color: #6B7280; }
+
+  .twalk-content { flex: 1; overflow: auto; padding: 16px 20px; background: #F5F7FA; }
+  .page-title { font-size: 15px; font-weight: 600; color: #1F2937; padding-left: 10px; border-left: 3px solid #2563EB; margin-bottom: 14px; }
+
+  /* Subtabs (内部 5 个 tab) */
+  .ex-subtabs { display: flex; gap: 0; margin-bottom: 14px; border-bottom: 1px solid #E5E7EB; }
+  .ex-tab { padding: 9px 18px; cursor: pointer; font-size: 13px; color: #6B7280; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  .ex-tab:hover { color: #1F2937; }
+  .ex-tab.active { color: #2563EB; border-bottom-color: #2563EB; font-weight: 500; }
+
+  .ex-page { display: none; }
+  .ex-page.active { display: block; }
+
+  /* Filter card */
+  .filter-card { background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 4px; padding: 16px 18px; margin-bottom: 14px; }
+  .filter-row { display: flex; flex-wrap: wrap; gap: 14px 20px; align-items: center; }
+  .filter-item { display: flex; align-items: center; gap: 6px; min-width: 220px; flex: 1; }
+  .filter-item label { font-size: 12px; color: #6B7280; white-space: nowrap; }
+  .filter-input, .filter-select { flex: 1; padding: 6px 10px; font-size: 12px; border: 1px solid #E5E7EB; border-radius: 4px; background: #FFFFFF; color: #1F2937; outline: none; min-width: 140px; }
+  .filter-input:focus, .filter-select:focus { border-color: #2563EB; }
+  .filter-actions { margin-left: auto; display: flex; gap: 8px; }
+  .btn { padding: 6px 18px; font-size: 12px; border-radius: 4px; cursor: pointer; border: 1px solid; }
+  .btn-primary { background: #2563EB; color: #FFFFFF; border-color: #2563EB; }
+  .btn-primary:hover { background: #1D4ED8; }
+  .btn-default { background: #FFFFFF; color: #4B5563; border-color: #E5E7EB; }
+  .btn-default:hover { background: #F9FAFB; }
+
+  /* Summary bar */
+  .summary-bar { background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 4px; padding: 14px 18px; margin-bottom: 12px; display: flex; flex-wrap: wrap; gap: 28px; font-size: 13px; align-items: center; }
+  .summary-bar .label { color: #1F2937; font-weight: 500; margin-right: 4px; }
+  .summary-bar .sub-label { color: #6B7280; }
+  .summary-bar .val-blue { color: #2563EB; font-weight: 500; }
+  .summary-bar .val-pos { color: #16A34A; font-weight: 500; }
+  .summary-bar .val-neg { color: #DC2626; font-weight: 500; }
+
+  /* Card around table */
+  .table-card { background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 4px; }
+  .table-wrap { overflow-x: auto; }
+
+  /* Default admin-style table */
+  table.adm { border-collapse: collapse; font-size: 12.5px; width: 100%; }
+  table.adm th, table.adm td { padding: 10px 12px; text-align: left; white-space: nowrap; border-bottom: 1px solid #F3F4F6; }
+  table.adm thead th { background: #F9FAFB; color: #4B5563; font-weight: 500; font-size: 12px; border-bottom: 1px solid #E5E7EB; }
+  table.adm tbody tr:hover td { background: #F9FAFB; }
+  .link-blue { color: #2563EB; cursor: pointer; }
+  .link-blue:hover { text-decoration: underline; }
+
+  /* Excel-style table (kept for legacy 内部页) */
+  table.ex { border-collapse: collapse; font-size: 11.5px; width: 100%; }
+  table.ex th, table.ex td { border: 0.5px solid #E5E7EB; padding: 6px 8px; text-align: center; white-space: nowrap; }
+  table.ex thead th { background: #F9FAFB; color: #4B5563; font-weight: 500; font-size: 11.5px; }
+  .h-blue, .h-green, .h-orange, .h-purple, .h-gray, .h-teal { background: #F9FAFB !important; color: #4B5563 !important; }
+  table.ex tbody tr:nth-child(even) td { background: #FAFBFC; }
+  table.ex tbody tr:hover td { background: #F0F7FF; }
+  .ex-cell-pos { color: #16A34A; }
+  .ex-cell-neg { color: #DC2626; }
+  .ex-cell-zero { color: #9CA3AF; }
+  .ex-cell-note { color: #6B7280; margin-left: 4px; }
+  .clickable { cursor: pointer; }
+  .selected td { background: #DBEAFE !important; }
+  .ex-pill { padding: 2px 8px; font-size: 11px; border-radius: 10px; display: inline-block; }
+  .ex-toast { position: fixed; top: 16px; right: 20px; background: #16A34A; color: #FFFFFF; padding: 10px 18px; font-size: 13px; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 999; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+  .ex-toast.show { opacity: 1; }
+  .ex-section-title { font-size: 13px; font-weight: 500; margin: 14px 0 8px; color: #1F2937; padding-left: 8px; border-left: 3px solid #2563EB; }
+
+  /* Fixed right column */
+  table.ex th.col-fixed, table.ex td.col-fixed { position: sticky; right: 0; z-index: 2; box-shadow: -2px 0 4px rgba(0,0,0,0.06); }
+  table.ex thead th.col-fixed { background: #F9FAFB; z-index: 3; }
+  table.ex tbody td.col-fixed { background: #FFFFFF; }
+  table.ex tbody tr:nth-child(even) td.col-fixed { background: #FAFBFC; }
+  table.ex tbody tr:hover td.col-fixed { background: #F0F7FF; }
+  table.ex tbody tr.issue-row td.col-fixed { background: #FEF3C7; }
+  table.ex tbody tr.selected td.col-fixed { background: #DBEAFE !important; }
+
+  /* Pagination */
+  .pagination { display: flex; align-items: center; padding: 12px 18px; gap: 8px; font-size: 12px; color: #6B7280; }
+  .pagination .total { margin-right: auto; }
+  .pg-btn { padding: 4px 10px; min-width: 28px; text-align: center; border: 1px solid #E5E7EB; background: #FFFFFF; color: #4B5563; border-radius: 4px; cursor: pointer; }
+  .pg-btn:hover { border-color: #2563EB; color: #2563EB; }
+  .pg-btn.active { background: #2563EB; color: #FFFFFF; border-color: #2563EB; }
+  .pg-size { padding: 4px 8px; font-size: 12px; border: 1px solid #E5E7EB; border-radius: 4px; background: #FFFFFF; color: #4B5563; }
+  .pg-jump-input { width: 44px; padding: 4px 6px; font-size: 12px; border: 1px solid #E5E7EB; border-radius: 4px; text-align: center; }
+</style>
+
+<div class="twalk-app">
+
+<div id="ex-toast" class="ex-toast">操作成功</div>
+
+<!-- ============== Sidebar ============== -->
+<aside class="twalk-sidebar">
+  <div class="twalk-logo">TWALK</div>
+  <div class="twalk-search">
+    <input type="text" placeholder="搜索" />
+  </div>
+  <nav class="twalk-menu">
+    <div class="twalk-menu-group">
+      <div class="twalk-menu-group-title">P2P业务管理 <span class="arrow">▾</span></div>
+      <div class="twalk-menu-items">
+        <div class="twalk-menu-item active">CVpay渠道对账</div>
+      </div>
+    </div>
+  </nav>
+  <div class="twalk-user">
+    <div class="avatar">U</div>
+    <div class="uname">bridge.zhong@lbk....</div>
+  </div>
+</aside>
+
+<!-- ============== Main ============== -->
+<main class="twalk-main">
+
+  <div class="twalk-tabs-bar">
+    <div class="twalk-tab active">CVpay渠道对账 <span class="close">×</span></div>
+  </div>
+
+  <div class="twalk-content">
+
+    <div class="page-title">CVpay渠道对账</div>
+
+    <!-- Inner subtabs (原来的 5 个 tab) -->
+    <div class="ex-subtabs">
+      <div class="ex-tab active" data-tab="recon">对账总表</div>
+      <div class="ex-tab" data-tab="vault">底仓账户流水</div>
+      <div class="ex-tab" data-tab="platform">平台账户流水</div>
+      <div class="ex-tab" data-tab="link">手动关联</div>
+      <div class="ex-tab" data-tab="log">平账记录</div>
+    </div>
+
+    <!-- ========== 对账总表 ========== -->
+    <div id="page-recon" class="ex-page active">
+
+      <div class="filter-card">
+        <div class="filter-row">
+          <div class="filter-item"><label>日期范围</label><input class="filter-input" type="text" value="2026-04-06 至 2026-04-10" /></div>
+          <div class="filter-item"><label>处理状态</label>
+            <select class="filter-select"><option>全部</option><option>正常</option><option>已平账</option><option>异常</option></select>
+          </div>
+          <div class="filter-actions">
+            <button class="btn btn-default">重置</button>
+            <button class="btn btn-primary">搜索</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="summary-bar">
+        <span><span class="label">合计</span></span>
+        <span><span class="sub-label">总期初</span> <span class="val-blue">2,240,229.5538486 USDT</span></span>
+        <span><span class="sub-label">总发生额</span> <span class="val-neg">-471,015.7305316608 USDT</span></span>
+        <span><span class="sub-label">LBK手续费</span> <span class="val-pos">+32.4041351 USDT</span></span>
+        <span><span class="sub-label">渠道手续费</span> <span class="val-neg">-471,021.2404143808 USDT</span></span>
+        <span><span class="sub-label">总期末</span> <span class="val-blue">2,029,000 USDT</span></span>
+      </div>
+
+      <div class="table-card">
+        <div class="table-wrap">
+          <table class="ex">
+            <thead>
+              <tr>
+                <th rowspan="3" style="min-width: 70px;">日期</th>
+                <th colspan="6" class="h-blue">P2P 订单</th>
+                <th colspan="6" class="h-green">平台账户流水 (CVPAY)</th>
+                <th colspan="3" class="h-orange">底仓账户流水</th>
+                <th colspan="6" class="h-purple">P2P 法币核对</th>
+                <th colspan="6" class="h-teal">链上充值核对</th>
+                <th rowspan="3" style="min-width: 60px;">USDT 综合</th>
+                <th rowspan="3" class="col-fixed" style="min-width: 80px;">状态/操作</th>
+              </tr>
+              <tr>
+                <th colspan="2">vnd</th>
+                <th colspan="2">php</th>
+                <th colspan="2">usdt</th>
+                <th colspan="2">P2P-vnd</th>
+                <th colspan="2">P2P-php</th>
+                <th colspan="2">未通过P2P</th>
+                <th rowspan="2">转入</th>
+                <th rowspan="2">转出</th>
+                <th rowspan="2">链上充值</th>
+                <th colspan="2">vnd</th>
+                <th colspan="2">php</th>
+                <th colspan="2">usdt</th>
+                <th colspan="3">vnd</th>
+                <th colspan="3">php</th>
+              </tr>
+              <tr>
+                <th>买入</th><th>卖出</th>
+                <th>买入</th><th>卖出</th>
+                <th>买入</th><th>卖出</th>
+                <th>买入</th><th>卖出</th>
+                <th>买入</th><th>卖出</th>
+                <th>vnd</th><th>php</th>
+                <th>H-B</th><th>I-C</th>
+                <th>J-D</th><th>K-E</th>
+                <th>N-F</th><th>O-G</th>
+                <th>L</th><th>P</th><th>L/P</th>
+                <th>M</th><th>P</th><th>M/P</th>
+              </tr>
+            </thead>
+            <tbody id="recon-body"></tbody>
+          </table>
+        </div>
+        <div class="pagination">
+          <span class="total">共 680 条</span>
+          <button class="pg-btn">‹</button>
+          <button class="pg-btn active">1</button>
+          <button class="pg-btn">2</button>
+          <button class="pg-btn">3</button>
+          <button class="pg-btn">4</button>
+          <button class="pg-btn">5</button>
+          <span>···</span>
+          <button class="pg-btn">14</button>
+          <button class="pg-btn">›</button>
+          <select class="pg-size"><option>50 条/页</option><option>100 条/页</option></select>
+          <span>跳至</span>
+          <input class="pg-jump-input" type="text" />
+          <span>页</span>
+        </div>
+      </div>
+
+      <div id="recon-detail" style="margin-top: 12px;"></div>
+    </div>
+
+    <!-- ========== 底仓账户流水 ========== -->
+    <div id="page-vault" class="ex-page">
+      <div class="filter-card">
+        <div class="filter-row">
+          <div class="filter-item"><label>账户</label>
+            <select class="filter-select"><option>LBA6G57729</option><option>LBA9H52363</option></select>
+          </div>
+          <div class="filter-item"><label>日期</label>
+            <input class="filter-input" type="text" value="2026-04-06 至 2026-04-10" />
+          </div>
+          <div class="filter-actions">
+            <button class="btn btn-default">重置</button>
+            <button class="btn btn-primary">搜索</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-card">
+        <div class="table-wrap">
+          <table class="ex">
+            <thead>
+              <tr>
+                <th rowspan="2" style="min-width: 70px;">日期</th>
+                <th colspan="8">真实流水</th>
+                <th rowspan="2" style="min-width: 80px;">余额</th>
+                <th colspan="4">链上充值入账</th>
+                <th colspan="4">P2P 卖出</th>
+                <th colspan="4">P2P 买入</th>
+              </tr>
+              <tr>
+                <th>链上充值</th>
+                <th>P2P卖出</th>
+                <th>P2P买入</th>
+                <th>账户划转入</th>
+                <th>系统划转出</th>
+                <th>资产抹除</th>
+                <th>法币消费</th>
+                <th>合计</th>
+                <th>已完成</th><th>待完成</th><th>剩余待完成</th><th>完成待完成</th>
+                <th>已完成</th><th>待完成</th><th>剩余待完成</th><th>完成待完成</th>
+                <th>已完成</th><th>待完成</th><th>剩余待完成</th><th>完成待完成</th>
+              </tr>
+            </thead>
+            <tbody id="vault-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div style="font-size: 12px; color: #6B7280; margin-top: 8px;">
+        勾稽公式: 真实流水 = 已完成 + 待完成。剩余待完成 = 上日剩余 + 当日待完成 − 当日完成待完成。
+      </div>
+    </div>
+
+    <!-- ========== 平台账户流水 ========== -->
+    <div id="page-platform" class="ex-page">
+      <div class="filter-card">
+        <div class="filter-row">
+          <div class="filter-item"><label>币种</label>
+            <select id="pf-ccy" class="filter-select"><option value="vnd">VND</option><option value="php">PHP</option></select>
+          </div>
+          <div class="filter-item"><label>日期</label>
+            <input class="filter-input" type="text" value="2026-04-06 至 2026-04-10" />
+          </div>
+          <div class="filter-actions">
+            <button class="btn btn-default">重置</button>
+            <button class="btn btn-primary">搜索</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-card">
+        <div class="table-wrap">
+          <table class="ex">
+            <thead>
+              <tr>
+                <th rowspan="2" style="min-width: 70px;">日期</th>
+                <th colspan="3">真实流水</th>
+                <th rowspan="2" style="min-width: 100px;">余额</th>
+                <th colspan="4">P2P 买入</th>
+                <th colspan="4">P2P 卖出</th>
+                <th colspan="4">未通过 P2P</th>
+              </tr>
+              <tr>
+                <th>P2P买入</th>
+                <th>P2P卖出</th>
+                <th>未通过P2P</th>
+                <th>已完成</th><th>待完成</th><th>剩余待完成</th><th>完成待完成</th>
+                <th>已完成</th><th>待完成</th><th>剩余待完成</th><th>完成待完成</th>
+                <th>已完成</th><th>待完成</th><th>剩余待完成</th><th>完成待完成</th>
+              </tr>
+            </thead>
+            <tbody id="platform-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== 手动关联 ========== -->
+    <div id="page-link" class="ex-page">
+      <div style="background: #FEF3C7; border: 1px solid #FCD34D; padding: 8px 12px; margin-bottom: 12px; font-size: 12px; border-radius: 4px; color: #92400E;">
+        用法: 左表选一笔底仓流水 + 右表勾选一笔或多笔 CVPAY 流水 (一对多) → 自动校验汇率 → 填关联说明 → 提交
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div class="table-card" style="padding: 12px;">
+          <div class="ex-section-title">未关联 — 底仓流水</div>
+          <table class="ex">
+            <thead><tr><th style="width: 40px;">勾选</th><th>流水号</th><th>类型</th><th>金额(USDT)</th><th>时间</th></tr></thead>
+            <tbody id="link-left-body"></tbody>
+          </table>
+        </div>
+        <div class="table-card" style="padding: 12px;">
+          <div class="ex-section-title">未关联 — CVPAY 流水 <span style="color:#6B7280;font-weight:400;font-size:12px;">(可多选)</span></div>
+          <table class="ex">
+            <thead><tr><th style="width: 40px;">勾选</th><th>订单号</th><th>币种</th><th>金额</th><th>时间</th></tr></thead>
+            <tbody id="link-right-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="link-check" style="display: none; margin-top: 14px;" class="table-card">
+        <div style="padding: 12px;">
+          <div class="ex-section-title">关联校验</div>
+          <table class="ex">
+            <thead><tr><th>底仓收到</th><th>CVPAY 付出</th><th>隐含汇率</th><th>市场价</th><th>偏差</th><th>校验</th></tr></thead>
+            <tbody id="link-check-body"></tbody>
+          </table>
+          <div style="margin-top: 12px;">
+            <div style="font-size: 12px; margin-bottom: 4px; color: #4B5563;">关联说明 (必填):</div>
+            <textarea id="link-note" placeholder="例: 商家无币,从 CVPAY 用 VND 紧急补币" style="width: 100%; min-height: 56px; font-size: 12px; padding: 8px; border: 1px solid #E5E7EB; border-radius: 4px; outline: none; font-family: inherit;"></textarea>
+          </div>
+          <div style="margin-top: 10px; display: flex; gap: 8px; justify-content: flex-end;">
+            <button class="btn btn-default" onclick="exClearLink()">清空</button>
+            <button class="btn btn-primary" onclick="exDoLink()">建立关联</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== 平账记录 ========== -->
+    <div id="page-log" class="ex-page">
+      <div class="filter-card">
+        <div class="filter-row">
+          <div class="filter-item"><label>类型</label>
+            <select class="filter-select"><option>全部</option><option>平账</option><option>关联</option><option>撤销</option></select>
+          </div>
+          <div class="filter-item"><label>操作人</label>
+            <select class="filter-select"><option>全部</option><option>李宇</option></select>
+          </div>
+          <div class="filter-item"><label>订单号</label>
+            <input class="filter-input" type="text" placeholder="搜索订单号..." />
+          </div>
+          <div class="filter-actions">
+            <button class="btn btn-default">重置</button>
+            <button class="btn btn-primary">搜索</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-card">
+        <div class="table-wrap">
+          <table class="adm">
+            <thead>
+              <tr>
+                <th style="min-width: 130px;">操作时间</th>
+                <th style="min-width: 70px;">类型</th>
+                <th style="min-width: 180px;">关联订单</th>
+                <th style="min-width: 110px;">差异金额</th>
+                <th style="min-width: 100px;">差异原因</th>
+                <th style="min-width: 80px;">操作人</th>
+                <th>备注</th>
+              </tr>
+            </thead>
+            <tbody id="log-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+</div>
+
+<script>
+(function(){
+  const reconData = [
+    { date: '04/10', vndBuy: 0, vndSell: 0, phpBuy: 0, phpSell: 0, usdtBuy: 0, usdtSell: 0, pVndBuy: 0, pVndSell: 0, pPhpBuy: 0, pPhpSell: 0, pVnd: 0, pPhp: 0, vIn: 0, vOut: 0, vChain: 0, hasIssue: false },
+    { date: '04/09', vndBuy: 185000000, vndSell: 8893820, phpBuy: 0, phpSell: 0, usdtBuy: 7125.04, usdtSell: 342.07, pVndBuy: 185000000, pVndSell: 8893820, pPhpBuy: 0, pPhpSell: 0, pVnd: 0, pPhp: 0, vIn: 7125.04, vOut: 342.07, vChain: 0, hasIssue: false },
+    { date: '04/08', vndBuy: 265634280, vndBuyNote: 'Lbankpay：2928.90', vndSell: 205171140, phpBuy: 0, phpSell: 0, usdtBuy: 10216.78, usdtSell: 7891.19, pVndBuy: 265634280, pVndSell: 205146140, pPhpBuy: 0, pPhpSell: 0, pVnd: 0, pPhp: 0, vIn: 10216.78, vOut: 7867.69, vChain: 0, hasIssue: false, fixed: true, issue: 'P2P 卖出 vnd 差额 25,000 (待完成 23.5 USDT)' },
+    { date: '04/07', vndBuy: 81338140, vndSell: 308970740, phpBuy: 0, phpSell: 0, usdtBuy: 3128.39, usdtSell: 11883.49, pVndBuy: 81338140, pVndSell: 308970740, pPhpBuy: 0, pPhpSell: 0, pVnd: 78000000, pPhp: 0, vIn: 3128.39, vOut: 11883.49, vChain: 3000, hasIssue: true, issue: '系统划转出账 -60,000 USDT 无关联订单' },
+    { date: '04/06', vndBuy: 274076180, vndSell: 36921300, phpBuy: 0, phpSell: 0, usdtBuy: 10541.43, usdtSell: 1420.05, pVndBuy: 274076180, pVndSell: 36921300, pPhpBuy: 0, pPhpSell: 0, pVnd: 0, pPhp: 0, vIn: 10541.43, vOut: 1420.05, vChain: 0, hasIssue: false }
+  ];
+
+  const vaultData = [
+    { d: '04/10', chain: 0, sell: 0, buy: 0, in: 0, sysOut: 0, write: 0, fb: 0, bal: 75996.42,
+      cd: { done: 0, pend: 0, rem: 0, dp: 0 }, sd: { done: 0, pend: 0, rem: 23.5, dp: 0 }, bd: { done: 0, pend: 0, rem: 0, dp: 0 } },
+    { d: '04/09', chain: 0, sell: -342.07, buy: 7125.04, in: 0, sysOut: 0, write: 0, fb: 0, bal: 75996.42,
+      cd: { done: 0, pend: 0, rem: 0, dp: 0 }, sd: { done: 342.07, pend: 0, rem: 23.5, dp: 0 }, bd: { done: 7125.04, pend: 0, rem: 0, dp: 0 } },
+    { d: '04/08', chain: 0, sell: -7891.19, buy: 10216.78, in: 0, sysOut: 0, write: 0, fb: 0, bal: 69213.45,
+      cd: { done: 0, pend: 0, rem: 0, dp: 0 }, sd: { done: 7867.69, pend: 23.5, rem: 23.5, dp: 12 }, bd: { done: 10216.78, pend: 0, rem: 0, dp: 0 } },
+    { d: '04/07', chain: 3000, sell: -11883.49, buy: 3128.39, in: 0, sysOut: -60000, write: 0, fb: 0, bal: 66887.86,
+      cd: { done: 3000, pend: 0, rem: 0, dp: 0 }, sd: { done: 11883.49, pend: 0, rem: 11.5, dp: 50 }, bd: { done: 3128.39, pend: 0, rem: 0, dp: 0 } },
+    { d: '04/06', chain: 0, sell: -1420.05, buy: 10541.43, in: 0, sysOut: 0, write: 0, fb: 0, bal: 135642.96,
+      cd: { done: 0, pend: 0, rem: 0, dp: 0 }, sd: { done: 1420.05, pend: 0, rem: 61.5, dp: 30 }, bd: { done: 10541.43, pend: 0, rem: 0, dp: 0 } }
+  ];
+
+  const platformData = {
+    vnd: [
+      { d: '04/10', buy: 0, sell: 0, np: 0, bal: 258300000, bd: {done:0,pend:0,rem:0,dp:0}, sd: {done:0,pend:0,rem:0,dp:0}, nd: {done:0,pend:0,rem:0,dp:0} },
+      { d: '04/09', buy: 185000000, sell: 8893820, np: 0, bal: 258300000, bd: {done:185000000,pend:0,rem:0,dp:0}, sd: {done:8893820,pend:0,rem:0,dp:0}, nd: {done:0,pend:0,rem:0,dp:0} },
+      { d: '04/08', buy: 265634280, sell: 205146140, np: 0, bal: 82193820, bd: {done:265634280,pend:0,rem:0,dp:0}, sd: {done:205121140,pend:25000,rem:25000,dp:0}, nd: {done:0,pend:0,rem:0,dp:0} },
+      { d: '04/07', buy: 81338140, sell: 308970740, np: 78000000, bal: 21705680, bd: {done:81338140,pend:0,rem:0,dp:0}, sd: {done:308970740,pend:0,rem:0,dp:0}, nd: {done:78000000,pend:0,rem:0,dp:0} },
+      { d: '04/06', buy: 274076180, sell: 36921300, np: 0, bal: 251338280, bd: {done:274076180,pend:0,rem:0,dp:0}, sd: {done:36921300,pend:0,rem:0,dp:0}, nd: {done:0,pend:0,rem:0,dp:0} }
+    ],
+    php: [
+      { d: '04/10', buy: 0, sell: 0, np: 0, bal: 4820000, bd: {done:0,pend:0,rem:0,dp:0}, sd: {done:0,pend:0,rem:0,dp:0}, nd: {done:0,pend:0,rem:0,dp:0} },
+      { d: '04/09', buy: 0, sell: 0, np: 0, bal: 4820000, bd: {done:0,pend:0,rem:0,dp:0}, sd: {done:0,pend:0,rem:0,dp:0}, nd: {done:0,pend:0,rem:0,dp:0} }
+    ]
+  };
+
+  let linkLeft = [
+    { id: 'L1', code: 'LBA9H52363-1192', type: '链上充值入账', amt: 3000, time: '04/27 09:14' },
+    { id: 'L2', code: 'LBA6G57729-3801', type: '链上充值入账', amt: 1250, time: '04/27 11:23' }
+  ];
+  let linkRight = [
+    { id: 'R1', code: 'CV-99820', ccy: 'VND', amt: 50000000, time: '04/27 09:13' },
+    { id: 'R2', code: 'CV-99821', ccy: 'VND', amt: 28000000, time: '04/27 09:18' },
+    { id: 'R3', code: 'CV-99835', ccy: 'VND', amt: 32500000, time: '04/27 11:25' }
+  ];
+
+  const logData = [
+    { time: '04/27 14:32', type: '平账', target: 'LBA6G57729-3805', diff: '1.00 USDT', reason: '手续费扣减', op: '李宇', note: '链上 Gas 费' },
+    { time: '04/27 11:08', type: '关联', target: 'LBA9-1192 ↔ CV-99820', diff: '3,000 USDT', reason: '紧急补币', op: '李宇', note: '商家无币,VND 直换' },
+    { time: '04/26 16:45', type: '平账', target: 'LBA6G57729-3812', diff: '60,000 USDT', reason: '系统划转', op: '李宇', note: '日终划转至冷钱包' },
+    { time: '04/25 10:22', type: '撤销', target: 'LBA6G57729-3700', diff: '—', reason: '误操作', op: '管理员', note: '撤销 04/24 平账' },
+    { time: '04/23 18:33', type: '平账', target: 'LBA9H52363-1180', diff: '12.30 USDT', reason: '资产抹除', op: '李宇', note: '坏账核销' }
+  ];
+
+  let selectedRecon = null;
+  let selectedLeft = null;
+  let selectedRight = new Set();
+
+  const fmt = (n, d) => {
+    d = d || 0;
+    if (n === 0) return '<span class="ex-cell-zero">-</span>';
+    const cls = n > 0 ? 'ex-cell-pos' : 'ex-cell-neg';
+    return '<span class="' + cls + '">' + n.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }) + '</span>';
+  };
+  const fmtPlain = (n, d) => {
+    d = d || 0;
+    if (n === 0) return '-';
+    return n.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+  };
+  const fmtWithNote = (n, note, d) => {
+    const text = fmtPlain(n, d);
+    return note ? text + '<span class="ex-cell-note">（' + note + '）</span>' : text;
+  };
+  const checkCell = (v) => {
+    if (Math.abs(v) < 0.01) return '<span style="color:#16A34A;">0</span>';
+    return '<span style="color:#DC2626;background:#FEE2E2;padding:1px 6px;border-radius:3px;">' + (v > 0 ? '+' : '') + fmtPlain(v, 0) + '</span>';
+  };
+  const statusCell = (r) => {
+    if (r.hasIssue) return '<span class="ex-pill" style="background:#FEE2E2;color:#DC2626;">异常</span>';
+    if (r.fixed)    return '<span class="ex-pill" style="background:#DBEAFE;color:#1D4ED8;">已平账</span>';
+    return '<span class="ex-pill" style="background:#DCFCE7;color:#16A34A;">正常</span>';
+  };
+
+  function renderRecon() {
+    const tb = document.getElementById('recon-body');
+    tb.innerHTML = reconData.map((r, idx) => {
+      const qH = r.pVndBuy - r.vndBuy;
+      const qI = r.pVndSell - r.vndSell;
+      const qJ = r.pPhpBuy - r.phpBuy;
+      const qK = r.pPhpSell - r.phpSell;
+      const qN = r.vIn - r.usdtBuy;
+      const qO = r.vOut - r.usdtSell;
+      const lp = r.vChain > 0 ? Math.round(r.pVnd / r.vChain) : 0;
+      const mp = r.vChain > 0 ? Math.round(r.pPhp / r.vChain) : 0;
+      const usdtTotal = r.pVnd / (lp || 1) + r.pPhp / (mp || 1) - r.vChain;
+      const sel = selectedRecon === idx ? 'selected' : '';
+      const issueCls = r.hasIssue ? 'issue-row' : '';
+      const rowStyle = r.hasIssue ? 'background: #FEF3C7;' : '';
+      return '<tr class="ex-row clickable ' + sel + ' ' + issueCls + '" data-idx="' + idx + '" style="' + rowStyle + '">' +
+        '<td>' + r.date + '</td>' +
+        '<td>' + fmtWithNote(r.vndBuy, r.vndBuyNote) + '</td><td>' + fmtPlain(r.vndSell) + '</td>' +
+        '<td>' + fmtPlain(r.phpBuy) + '</td><td>' + fmtPlain(r.phpSell) + '</td>' +
+        '<td>' + fmtPlain(r.usdtBuy, 2) + '</td><td>' + fmtPlain(r.usdtSell, 2) + '</td>' +
+        '<td>' + fmtPlain(r.pVndBuy) + '</td><td>' + fmtPlain(r.pVndSell) + '</td>' +
+        '<td>' + fmtPlain(r.pPhpBuy) + '</td><td>' + fmtPlain(r.pPhpSell) + '</td>' +
+        '<td>' + fmtPlain(r.pVnd) + '</td><td>' + fmtPlain(r.pPhp) + '</td>' +
+        '<td>' + fmtPlain(r.vIn, 2) + '</td><td>' + fmtPlain(r.vOut, 2) + '</td><td>' + fmtPlain(r.vChain, 2) + '</td>' +
+        '<td>' + checkCell(qH) + '</td><td>' + checkCell(qI) + '</td>' +
+        '<td>' + checkCell(qJ) + '</td><td>' + checkCell(qK) + '</td>' +
+        '<td>' + checkCell(qN) + '</td><td>' + checkCell(qO) + '</td>' +
+        '<td>' + fmtPlain(r.pVnd) + '</td><td>' + fmtPlain(r.vChain, 2) + '</td><td>' + (lp ? lp.toLocaleString() : '-') + '</td>' +
+        '<td>' + fmtPlain(r.pPhp) + '</td><td>' + fmtPlain(r.vChain, 2) + '</td><td>' + (mp ? mp.toLocaleString() : '-') + '</td>' +
+        '<td>' + checkCell(usdtTotal) + '</td>' +
+        '<td class="col-fixed">' + statusCell(r) + '</td>' +
+      '</tr>';
+    }).join('');
+    tb.querySelectorAll('.clickable').forEach(r => {
+      r.onclick = () => { selectedRecon = parseInt(r.dataset.idx); renderRecon(); renderReconDetail(); };
+    });
+  }
+
+  function renderReconDetail() {
+    const box = document.getElementById('recon-detail');
+    if (selectedRecon === null) { box.innerHTML = ''; return; }
+    const r = reconData[selectedRecon];
+    if (!r.hasIssue) {
+      box.innerHTML = '<div style="background:#DCFCE7;border:1px solid #86EFAC;padding:12px;font-size:12px;color:#16A34A;border-radius:4px;">' + r.date + ' 当日对账正常,所有核对项均为 0。</div>';
+      return;
+    }
+    box.innerHTML =
+      '<div class="table-card" style="padding:14px;">' +
+      '<div class="ex-section-title">差异详情 — ' + r.date + '</div>' +
+      '<div style="font-size:12px;color:#DC2626;margin-bottom:10px;">⚠ ' + r.issue + '</div>' +
+      '<div style="font-size:12px;font-weight:500;margin-bottom:6px;color:#1F2937;">手动平账</div>' +
+      '<table class="ex" style="margin-bottom:10px;"><thead><tr>' +
+        '<th>差异原因</th><th>差异金额</th><th>备注说明</th><th style="width:100px;">操作</th>' +
+      '</tr></thead><tbody><tr>' +
+        '<td><select id="fix-reason" style="width:100%;font-size:12px;padding:4px;border:1px solid #E5E7EB;border-radius:3px;"><option>手续费扣减</option><option>系统划转</option><option>紧急补币</option><option>资产抹除</option><option>链上 Gas 费</option><option>其他</option></select></td>' +
+        '<td><input type="text" value="' + r.issue.match(/[\d,\.]+/)[0] + '" style="width:100%;font-size:12px;padding:4px;border:1px solid #E5E7EB;border-radius:3px;" readonly /></td>' +
+        '<td><input id="fix-note" type="text" placeholder="请输入差异说明..." style="width:100%;font-size:12px;padding:4px;border:1px solid #E5E7EB;border-radius:3px;" /></td>' +
+        '<td><button class="btn btn-primary" onclick="exDoFix()" style="padding:4px 10px;font-size:12px;">确认平账</button></td>' +
+      '</tr></tbody></table>' +
+      '</div>';
+  }
+
+  function renderVault() {
+    const tb = document.getElementById('vault-body');
+    tb.innerHTML = vaultData.map(v => {
+      const total = v.chain + v.sell + v.buy + v.in + v.sysOut + v.write + v.fb;
+      return '<tr class="ex-row">' +
+        '<td>' + v.d + '</td>' +
+        '<td>' + fmt(v.chain, 2) + '</td>' +
+        '<td>' + fmt(v.sell, 2) + '</td>' +
+        '<td>' + fmt(v.buy, 2) + '</td>' +
+        '<td>' + fmt(v.in, 2) + '</td>' +
+        '<td>' + fmt(v.sysOut, 2) + '</td>' +
+        '<td>' + fmt(v.write, 2) + '</td>' +
+        '<td>' + fmt(v.fb, 2) + '</td>' +
+        '<td><strong>' + fmtPlain(total, 2) + '</strong></td>' +
+        '<td>' + fmtPlain(v.bal, 2) + '</td>' +
+        '<td>' + fmtPlain(v.cd.done, 2) + '</td><td>' + fmtPlain(v.cd.pend, 2) + '</td><td>' + fmtPlain(v.cd.rem, 2) + '</td><td>' + fmtPlain(v.cd.dp, 2) + '</td>' +
+        '<td>' + fmtPlain(v.sd.done, 2) + '</td>' +
+        '<td' + (v.sd.pend > 0 ? ' style="background:#FEF3C7;color:#92400E;"' : '') + '>' + fmtPlain(v.sd.pend, 2) + '</td>' +
+        '<td' + (v.sd.rem > 0 ? ' style="background:#FEF3C7;color:#92400E;"' : '') + '>' + fmtPlain(v.sd.rem, 2) + '</td>' +
+        '<td' + (v.sd.dp > 0 ? ' style="background:#DBEAFE;color:#1D4ED8;"' : '') + '>' + fmtPlain(v.sd.dp, 2) + '</td>' +
+        '<td>' + fmtPlain(v.bd.done, 2) + '</td><td>' + fmtPlain(v.bd.pend, 2) + '</td><td>' + fmtPlain(v.bd.rem, 2) + '</td><td>' + fmtPlain(v.bd.dp, 2) + '</td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  function renderPlatform() {
+    const ccy = document.getElementById('pf-ccy').value;
+    const data = platformData[ccy];
+    const tb = document.getElementById('platform-body');
+    tb.innerHTML = data.map(p => {
+      return '<tr class="ex-row">' +
+        '<td>' + p.d + '</td>' +
+        '<td>' + fmtPlain(p.buy) + '</td>' +
+        '<td>' + fmtPlain(p.sell) + '</td>' +
+        '<td>' + fmtPlain(p.np) + '</td>' +
+        '<td>' + fmtPlain(p.bal) + '</td>' +
+        '<td>' + fmtPlain(p.bd.done) + '</td><td>' + fmtPlain(p.bd.pend) + '</td><td>' + fmtPlain(p.bd.rem) + '</td><td>' + fmtPlain(p.bd.dp) + '</td>' +
+        '<td>' + fmtPlain(p.sd.done) + '</td>' +
+        '<td' + (p.sd.pend > 0 ? ' style="background:#FEF3C7;color:#92400E;"' : '') + '>' + fmtPlain(p.sd.pend) + '</td>' +
+        '<td' + (p.sd.rem > 0 ? ' style="background:#FEF3C7;color:#92400E;"' : '') + '>' + fmtPlain(p.sd.rem) + '</td>' +
+        '<td>' + fmtPlain(p.sd.dp) + '</td>' +
+        '<td>' + fmtPlain(p.nd.done) + '</td><td>' + fmtPlain(p.nd.pend) + '</td><td>' + fmtPlain(p.nd.rem) + '</td><td>' + fmtPlain(p.nd.dp) + '</td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  function renderLink() {
+    const lb = document.getElementById('link-left-body');
+    lb.innerHTML = linkLeft.map(l => {
+      const checked = selectedLeft === l.id ? 'checked' : '';
+      const sel = selectedLeft === l.id ? 'selected' : '';
+      return '<tr class="ex-row clickable ' + sel + '" data-id="' + l.id + '">' +
+        '<td><input type="radio" name="ll" ' + checked + ' /></td>' +
+        '<td style="font-family:monospace;">' + l.code + '</td>' +
+        '<td>' + l.type + '</td>' +
+        '<td class="ex-cell-pos">+' + l.amt.toLocaleString() + '</td>' +
+        '<td>' + l.time + '</td>' +
+      '</tr>';
+    }).join('');
+    lb.querySelectorAll('tr').forEach(t => {
+      t.onclick = () => { selectedLeft = t.dataset.id; renderLink(); renderLinkCheck(); };
+    });
+
+    const rb = document.getElementById('link-right-body');
+    rb.innerHTML = linkRight.map(r => {
+      const checked = selectedRight.has(r.id) ? 'checked' : '';
+      const sel = selectedRight.has(r.id) ? 'selected' : '';
+      return '<tr class="ex-row clickable ' + sel + '" data-id="' + r.id + '">' +
+        '<td><input type="checkbox" ' + checked + ' /></td>' +
+        '<td style="font-family:monospace;">' + r.code + '</td>' +
+        '<td>' + r.ccy + '</td>' +
+        '<td class="ex-cell-neg">-' + r.amt.toLocaleString() + '</td>' +
+        '<td>' + r.time + '</td>' +
+      '</tr>';
+    }).join('');
+    rb.querySelectorAll('tr').forEach(t => {
+      t.onclick = () => {
+        const id = t.dataset.id;
+        if (selectedRight.has(id)) selectedRight.delete(id);
+        else selectedRight.add(id);
+        renderLink(); renderLinkCheck();
+      };
+    });
+  }
+
+  function renderLinkCheck() {
+    const box = document.getElementById('link-check');
+    if (!selectedLeft || selectedRight.size === 0) { box.style.display = 'none'; return; }
+    box.style.display = 'block';
+    const L = linkLeft.find(x => x.id === selectedLeft);
+    const Rs = linkRight.filter(x => selectedRight.has(x.id));
+    // 多币种保护：CVPAY 多笔必须同币种才可合并校验
+    const ccy = Rs[0].ccy;
+    const sameCcy = Rs.every(r => r.ccy === ccy);
+    const totalR = Rs.reduce((s, r) => s + r.amt, 0);
+    const market = ccy === 'VND' ? 25950 : 56;
+    const rate = Math.round(totalR / L.amt);
+    const dev = Math.abs((rate - market) / market * 100).toFixed(2);
+    const ok = sameCcy && parseFloat(dev) < 1;
+
+    let rows = '';
+    // 每笔 CVpay 明细
+    Rs.forEach((r, i) => {
+      rows += '<tr class="ex-row">' +
+        '<td>' + (i === 0 ? L.amt.toLocaleString() + ' USDT' : '<span class="ex-cell-zero">—</span>') + '</td>' +
+        '<td>' + r.amt.toLocaleString() + ' ' + r.ccy + ' <span class="ex-cell-note">(' + r.code + ')</span></td>' +
+        '<td>' + Math.round(r.amt / L.amt).toLocaleString() + '</td>' +
+        '<td>' + (r.ccy === 'VND' ? 25950 : 56).toLocaleString() + '</td>' +
+        '<td>—</td>' +
+        '<td>—</td>' +
+      '</tr>';
+    });
+    // 合计行
+    if (Rs.length > 1) {
+      rows += '<tr class="ex-row" style="background:#F9FAFB;font-weight:500;">' +
+        '<td>' + L.amt.toLocaleString() + ' USDT</td>' +
+        '<td>合计 ' + totalR.toLocaleString() + ' ' + ccy + (sameCcy ? '' : ' <span style="color:#DC2626;">(币种不一致)</span>') + '</td>' +
+        '<td><strong>' + rate.toLocaleString() + '</strong></td>' +
+        '<td>' + market.toLocaleString() + '</td>' +
+        '<td>' + dev + '%</td>' +
+        '<td>' + (ok ? '<span style="color:#16A34A;">✓ 通过</span>' : '<span style="color:#DC2626;">⚠ ' + (sameCcy ? '偏差过大' : '币种不一致') + '</span>') + '</td>' +
+      '</tr>';
+    } else {
+      // 单笔时把校验结果放到唯一的明细行
+      rows = '<tr class="ex-row"><td>' + L.amt.toLocaleString() + ' USDT</td>' +
+        '<td>' + Rs[0].amt.toLocaleString() + ' ' + ccy + ' <span class="ex-cell-note">(' + Rs[0].code + ')</span></td>' +
+        '<td><strong>' + rate.toLocaleString() + '</strong></td>' +
+        '<td>' + market.toLocaleString() + '</td>' +
+        '<td>' + dev + '%</td>' +
+        '<td>' + (ok ? '<span style="color:#16A34A;">✓ 通过</span>' : '<span style="color:#DC2626;">⚠ 偏差过大</span>') + '</td></tr>';
+    }
+    document.getElementById('link-check-body').innerHTML = rows;
+  }
+
+  function renderLog() {
+    const tb = document.getElementById('log-body');
+    const colorMap = { '平账': 'background:#FEF3C7;color:#92400E', '关联': 'background:#DBEAFE;color:#1D4ED8', '撤销': 'background:#FEE2E2;color:#DC2626' };
+    tb.innerHTML = logData.map(l => {
+      return '<tr>' +
+        '<td>' + l.time + '</td>' +
+        '<td><span class="ex-pill" style="' + colorMap[l.type] + ';">' + l.type + '</span></td>' +
+        '<td style="font-family:monospace;">' + l.target + '</td>' +
+        '<td' + (l.diff !== '—' ? ' style="color:#DC2626;"' : '') + '>' + l.diff + '</td>' +
+        '<td>' + l.reason + '</td>' +
+        '<td>' + l.op + '</td>' +
+        '<td>' + l.note + '</td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('ex-toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2000);
+  }
+
+  window.exDoFix = function() {
+    const reason = document.getElementById('fix-reason').value;
+    const note = document.getElementById('fix-note').value || '(无备注)';
+    const r = reconData[selectedRecon];
+    logData.unshift({
+      time: '04/27 ' + new Date().toTimeString().slice(0,5),
+      type: '平账',
+      target: r.date + ' 对账差异',
+      diff: r.issue.match(/[\d,\.]+/)[0] + ' USDT',
+      reason, op: '李宇', note
+    });
+    r.hasIssue = false;
+    r.fixed = true;
+    selectedRecon = null;
+    renderRecon();
+    renderReconDetail();
+    renderLog();
+    showToast('✓ 平账成功,记录已留痕');
+  };
+
+  window.exClearLink = function() {
+    selectedLeft = null;
+    selectedRight = new Set();
+    renderLink();
+    renderLinkCheck();
+  };
+
+  window.exDoLink = function() {
+    if (!selectedLeft || selectedRight.size === 0) {
+      showToast('⚠ 请先选择底仓流水和至少一笔 CVPAY 流水');
+      return;
+    }
+    if (!document.getElementById('link-note').value.trim()) {
+      showToast('⚠ 请填写关联说明');
+      return;
+    }
+    const L = linkLeft.find(x => x.id === selectedLeft);
+    const Rs = linkRight.filter(x => selectedRight.has(x.id));
+    const targetText = L.code.split('-')[0] + ' ↔ ' + (Rs.length === 1 ? Rs[0].code : Rs.map(r => r.code).join(' / '));
+    logData.unshift({
+      time: '04/27 ' + new Date().toTimeString().slice(0,5),
+      type: '关联',
+      target: targetText,
+      diff: L.amt.toLocaleString() + ' USDT' + (Rs.length > 1 ? ' (1↔' + Rs.length + ')' : ''),
+      reason: '紧急补币',
+      op: '李宇',
+      note: document.getElementById('link-note').value
+    });
+    linkLeft = linkLeft.filter(x => x.id !== selectedLeft);
+    linkRight = linkRight.filter(x => !selectedRight.has(x.id));
+    selectedLeft = null;
+    selectedRight = new Set();
+    document.getElementById('link-note').value = '';
+    renderLink();
+    renderLinkCheck();
+    renderLog();
+    showToast('✓ 关联建立成功,记录已留痕');
+  };
+
+  document.querySelectorAll('.ex-tab').forEach(t => {
+    t.onclick = () => {
+      document.querySelectorAll('.ex-tab').forEach(x => x.classList.remove('active'));
+      document.querySelectorAll('.ex-page').forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+      document.getElementById('page-' + t.dataset.tab).classList.add('active');
+    };
+  });
+
+  // Sidebar group collapse toggle
+  document.querySelectorAll('.twalk-menu-group-title').forEach(t => {
+    t.onclick = () => t.parentElement.classList.toggle('collapsed');
+  });
+
+  document.getElementById('pf-ccy').onchange = renderPlatform;
+
+  renderRecon();
+  renderVault();
+  renderPlatform();
+  renderLink();
+  renderLog();
+})();
+</script>
