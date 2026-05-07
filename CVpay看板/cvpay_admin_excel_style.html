@@ -57,6 +57,8 @@
   .btn-primary:hover { background: #1D4ED8; }
   .btn-default { background: #FFFFFF; color: #4B5563; border-color: #E5E7EB; }
   .btn-default:hover { background: #F9FAFB; }
+  .btn-export { background: #16A34A; color: #FFFFFF; border-color: #16A34A; }
+  .btn-export:hover { background: #15803D; }
 
   /* Summary bar */
   .summary-bar { background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 4px; padding: 14px 18px; margin-bottom: 12px; display: flex; flex-wrap: wrap; gap: 28px; font-size: 13px; align-items: center; }
@@ -95,6 +97,7 @@
   .ex-toast { position: fixed; top: 16px; right: 20px; background: #16A34A; color: #FFFFFF; padding: 10px 18px; font-size: 13px; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 999; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
   .ex-toast.show { opacity: 1; }
   .ex-section-title { font-size: 13px; font-weight: 500; margin: 14px 0 8px; color: #1F2937; padding-left: 8px; border-left: 3px solid #2563EB; }
+  .log-image-preview { display: block; width: 72px; height: 48px; object-fit: cover; margin-top: 6px; border: 1px solid #E5E7EB; border-radius: 4px; cursor: pointer; }
 
   /* Fixed right column */
   table.ex th.col-fixed, table.ex td.col-fixed { position: sticky; right: 0; z-index: 2; box-shadow: -2px 0 4px rgba(0,0,0,0.06); }
@@ -153,6 +156,7 @@
     <!-- Inner subtabs (原来的 5 个 tab) -->
     <div class="ex-subtabs">
       <div class="ex-tab active" data-tab="recon">对账总表</div>
+      <div class="ex-tab" data-tab="profit">盈利计算</div>
       <div class="ex-tab" data-tab="vault">底仓账户流水</div>
       <div class="ex-tab" data-tab="platform">平台账户流水</div>
       <div class="ex-tab" data-tab="link">手动关联</div>
@@ -165,23 +169,18 @@
       <div class="filter-card">
         <div class="filter-row">
           <div class="filter-item"><label>日期范围</label><input class="filter-input" type="text" value="2026-04-06 至 2026-04-10" /></div>
+          <div class="filter-item"><label>订单类型</label>
+            <select class="filter-select"><option>全部</option><option>P2P订单</option><option>Lbankpay-cvpay</option></select>
+          </div>
           <div class="filter-item"><label>处理状态</label>
             <select class="filter-select"><option>全部</option><option>正常</option><option>已平账</option><option>异常</option></select>
           </div>
           <div class="filter-actions">
             <button class="btn btn-default">重置</button>
             <button class="btn btn-primary">搜索</button>
+            <button class="btn btn-export" onclick="exExportTable('#page-recon table.ex', '对账总表')">导出Excel</button>
           </div>
         </div>
-      </div>
-
-      <div class="summary-bar">
-        <span><span class="label">合计</span></span>
-        <span><span class="sub-label">总期初</span> <span class="val-blue">2,240,229.5538486 USDT</span></span>
-        <span><span class="sub-label">总发生额</span> <span class="val-neg">-471,015.7305316608 USDT</span></span>
-        <span><span class="sub-label">LBK手续费</span> <span class="val-pos">+32.4041351 USDT</span></span>
-        <span><span class="sub-label">渠道手续费</span> <span class="val-neg">-471,021.2404143808 USDT</span></span>
-        <span><span class="sub-label">总期末</span> <span class="val-blue">2,029,000 USDT</span></span>
       </div>
 
       <div class="table-card">
@@ -190,10 +189,10 @@
             <thead>
               <tr>
                 <th rowspan="3" style="min-width: 70px;">日期</th>
-                <th colspan="6" class="h-blue">P2P 订单</th>
+                <th colspan="6" class="h-blue">LBK订单</th>
                 <th colspan="6" class="h-green">平台账户流水 (CVPAY)</th>
                 <th colspan="3" class="h-orange">底仓账户流水</th>
-                <th colspan="6" class="h-purple">P2P 法币核对</th>
+                <th colspan="6" class="h-purple">法币核对</th>
                 <th colspan="6" class="h-teal">链上充值核对</th>
                 <th rowspan="3" style="min-width: 60px;">USDT 综合</th>
                 <th rowspan="3" class="col-fixed" style="min-width: 80px;">状态/操作</th>
@@ -205,9 +204,9 @@
                 <th colspan="2">P2P-vnd</th>
                 <th colspan="2">P2P-php</th>
                 <th colspan="2">未通过P2P</th>
-                <th rowspan="2">转入</th>
-                <th rowspan="2">转出</th>
-                <th rowspan="2">链上充值</th>
+                <th rowspan="2">转入(T)</th>
+                <th rowspan="2">转出(U)</th>
+                <th rowspan="2">链上充值(V)</th>
                 <th colspan="2">vnd</th>
                 <th colspan="2">php</th>
                 <th colspan="2">usdt</th>
@@ -215,17 +214,23 @@
                 <th colspan="3">php</th>
               </tr>
               <tr>
-                <th>买入</th><th>卖出</th>
-                <th>买入</th><th>卖出</th>
-                <th>买入</th><th>卖出</th>
-                <th>买入</th><th>卖出</th>
-                <th>买入</th><th>卖出</th>
-                <th>vnd</th><th>php</th>
-                <th>H-B</th><th>I-C</th>
-                <th>J-D</th><th>K-E</th>
-                <th>N-F</th><th>O-G</th>
-                <th>L</th><th>P</th><th>L/P</th>
-                <th>M</th><th>P</th><th>M/P</th>
+                <!-- P2P 订单 (B-G) -->
+                <th>买入(B)</th><th>卖出(C)</th>
+                <th>买入(D)</th><th>卖出(E)</th>
+                <th>买入(F)</th><th>卖出(G)</th>
+                <!-- 平台账户流水 CVPAY (N-S) -->
+                <th>买入(N)</th><th>卖出(O)</th>
+                <th>买入(P)</th><th>卖出(Q)</th>
+                <th>vnd(R)</th><th>php(S)</th>
+                <!-- 底仓 (T-V) -->
+                <!-- T 转入 / U 转出 / V 链上充值 (rowspan from row 2) -->
+                <!-- 法币核对 = 平台 - P2P订单 -->
+                <th>N-B</th><th>O-C</th>
+                <th>P-D</th><th>Q-E</th>
+                <th>T-F</th><th>U-G</th>
+                <!-- 链上充值核对 -->
+                <th>R</th><th>V</th><th>R/V</th>
+                <th>S</th><th>V</th><th>S/V</th>
               </tr>
             </thead>
             <tbody id="recon-body"></tbody>
@@ -262,9 +267,13 @@
           <div class="filter-item"><label>日期</label>
             <input class="filter-input" type="text" value="2026-04-06 至 2026-04-10" />
           </div>
+          <div class="filter-item"><label>订单类型</label>
+            <select class="filter-select"><option>全部</option><option>P2P订单</option><option>Lbankpay-cvpay</option></select>
+          </div>
           <div class="filter-actions">
             <button class="btn btn-default">重置</button>
             <button class="btn btn-primary">搜索</button>
+            <button class="btn btn-export" onclick="exExportTable('#page-vault table.ex', '底仓账户流水')">导出Excel</button>
           </div>
         </div>
       </div>
@@ -300,9 +309,6 @@
         </div>
       </div>
 
-      <div style="font-size: 12px; color: #6B7280; margin-top: 8px;">
-        勾稽公式: 真实流水 = 已完成 + 待完成。剩余待完成 = 上日剩余 + 当日待完成 − 当日完成待完成。
-      </div>
     </div>
 
     <!-- ========== 平台账户流水 ========== -->
@@ -315,9 +321,13 @@
           <div class="filter-item"><label>日期</label>
             <input class="filter-input" type="text" value="2026-04-06 至 2026-04-10" />
           </div>
+          <div class="filter-item"><label>订单类型</label>
+            <select class="filter-select"><option>全部</option><option>P2P订单</option><option>Lbankpay-cvpay</option></select>
+          </div>
           <div class="filter-actions">
             <button class="btn btn-default">重置</button>
             <button class="btn btn-primary">搜索</button>
+            <button class="btn btn-export" onclick="exExportTable('#page-platform table.ex', '平台账户流水')">导出Excel</button>
           </div>
         </div>
       </div>
@@ -349,6 +359,60 @@
       </div>
     </div>
 
+    <!-- ========== 盈利计算 ========== -->
+    <div id="page-profit" class="ex-page">
+      <div class="filter-card">
+        <div class="filter-row">
+          <div class="filter-item"><label>日期范围</label>
+            <input class="filter-input" type="text" value="2026-04-30 至 2026-05-06" />
+          </div>
+          <div class="filter-item"><label>订单类型</label>
+            <select class="filter-select"><option>全部</option><option>P2P订单</option><option>Lbankpay-cvpay</option></select>
+          </div>
+          <div class="filter-actions">
+            <button class="btn btn-default">重置</button>
+            <button class="btn btn-primary">搜索</button>
+            <button class="btn btn-export" onclick="exExportTable('#page-profit table.ex', '盈利计算')">导出Excel</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="summary-bar">
+        <span><span class="label">合计</span></span>
+        <span><span class="sub-label">累计盈亏</span> <span class="val-neg" id="profit-sum-pl">—</span></span>
+        <span><span class="sub-label">手续费亏损</span> <span class="val-neg" id="profit-sum-fee">—</span></span>
+        <span><span class="sub-label">买卖价差</span> <span class="val-pos" id="profit-sum-spread">—</span></span>
+        <span><span class="sub-label">汇率差异</span> <span class="val-neg" id="profit-sum-fx">—</span></span>
+      </div>
+
+      <div class="table-card">
+        <div class="table-wrap">
+          <table class="ex">
+            <thead>
+              <tr>
+                <th rowspan="2" style="min-width: 70px;">日期</th>
+                <th rowspan="2" style="min-width: 110px;">期初授信</th>
+                <th colspan="2">底仓账户余额</th>
+                <th colspan="2">平台账户余额</th>
+                <th colspan="2">汇率</th>
+                <th rowspan="2" style="min-width: 100px;">盈亏情况</th>
+                <th rowspan="2" style="min-width: 90px;">单日波动</th>
+                <th rowspan="2" style="min-width: 100px;">手续费亏损</th>
+                <th rowspan="2" style="min-width: 90px;">买卖价差</th>
+                <th rowspan="2" style="min-width: 90px;">汇率差异</th>
+              </tr>
+              <tr>
+                <th>LBA6G57729</th><th>LBA9H52363</th>
+                <th>vnd</th><th>php</th>
+                <th>vnd</th><th>php</th>
+              </tr>
+            </thead>
+            <tbody id="profit-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <!-- ========== 手动关联 ========== -->
     <div id="page-link" class="ex-page">
       <div style="background: #FEF3C7; border: 1px solid #FCD34D; padding: 8px 12px; margin-bottom: 12px; font-size: 12px; border-radius: 4px; color: #92400E;">
@@ -357,14 +421,23 @@
 
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
         <div class="table-card" style="padding: 12px;">
-          <div class="ex-section-title">未关联 — 底仓流水</div>
+          <div class="ex-section-title" style="display:flex;align-items:center;gap:10px;">
+            <span>未关联 — 底仓流水</span>
+            <button class="btn btn-export" onclick="exExportTable('#link-left-body', '未关联底仓流水')" style="margin-left:auto;padding:4px 10px;font-size:12px;">导出Excel</button>
+          </div>
           <table class="ex">
             <thead><tr><th style="width: 40px;">勾选</th><th>流水号</th><th>类型</th><th>金额(USDT)</th><th>时间</th></tr></thead>
             <tbody id="link-left-body"></tbody>
           </table>
         </div>
         <div class="table-card" style="padding: 12px;">
-          <div class="ex-section-title">未关联 — CVPAY 流水 <span style="color:#6B7280;font-weight:400;font-size:12px;">(可多选)</span></div>
+          <div class="ex-section-title" style="display:flex;align-items:center;gap:10px;">
+            <span>未关联 — CVPAY 流水</span>
+            <span style="color:#6B7280;font-weight:400;font-size:12px;">(支持多选 — 一笔底仓 ↔ 多笔 CVPAY)</span>
+            <span id="link-right-count" style="margin-left:auto;font-weight:400;font-size:12px;color:#2563EB;"></span>
+            <a href="javascript:void(0)" onclick="exToggleAllRight()" style="font-weight:400;font-size:12px;color:#2563EB;text-decoration:none;">全选/反选</a>
+            <button class="btn btn-export" onclick="exExportTable('#link-right-body', '未关联CVPAY流水')" style="padding:4px 10px;font-size:12px;">导出Excel</button>
+          </div>
           <table class="ex">
             <thead><tr><th style="width: 40px;">勾选</th><th>订单号</th><th>币种</th><th>金额</th><th>时间</th></tr></thead>
             <tbody id="link-right-body"></tbody>
@@ -374,7 +447,10 @@
 
       <div id="link-check" style="display: none; margin-top: 14px;" class="table-card">
         <div style="padding: 12px;">
-          <div class="ex-section-title">关联校验</div>
+          <div class="ex-section-title" style="display:flex;align-items:center;gap:10px;">
+            <span>关联校验</span>
+            <button class="btn btn-export" onclick="exExportTable('#link-check-body', '关联校验')" style="margin-left:auto;padding:4px 10px;font-size:12px;">导出Excel</button>
+          </div>
           <table class="ex">
             <thead><tr><th>底仓收到</th><th>CVPAY 付出</th><th>隐含汇率</th><th>市场价</th><th>偏差</th><th>校验</th></tr></thead>
             <tbody id="link-check-body"></tbody>
@@ -396,7 +472,7 @@
       <div class="filter-card">
         <div class="filter-row">
           <div class="filter-item"><label>类型</label>
-            <select class="filter-select"><option>全部</option><option>平账</option><option>关联</option><option>撤销</option></select>
+            <select class="filter-select"><option>全部</option><option>平账</option><option>关联</option></select>
           </div>
           <div class="filter-item"><label>操作人</label>
             <select class="filter-select"><option>全部</option><option>李宇</option></select>
@@ -404,9 +480,13 @@
           <div class="filter-item"><label>订单号</label>
             <input class="filter-input" type="text" placeholder="搜索订单号..." />
           </div>
+          <div class="filter-item"><label>订单类型</label>
+            <select class="filter-select"><option>全部</option><option>P2P订单</option><option>Lbankpay-cvpay</option></select>
+          </div>
           <div class="filter-actions">
             <button class="btn btn-default">重置</button>
             <button class="btn btn-primary">搜索</button>
+            <button class="btn btn-export" onclick="exExportTable('#page-log table.adm', '平账记录')">导出Excel</button>
           </div>
         </div>
       </div>
@@ -438,40 +518,145 @@
 
 <script>
 (function(){
+  // 平台流水 (N/O/P/Q/R/S) = P2P 订单, 偏差即异常
+  // vIn/vOut (T/U) = 底仓收/发 USDT, 应 = P2P USDT
+  // 汇率参考: VND ~25,950/USDT, PHP ~56/USDT
   const reconData = [
-    { date: '04/10', vndBuy: 0, vndSell: 0, phpBuy: 0, phpSell: 0, usdtBuy: 0, usdtSell: 0, pVndBuy: 0, pVndSell: 0, pPhpBuy: 0, pPhpSell: 0, pVnd: 0, pPhp: 0, vIn: 0, vOut: 0, vChain: 0, hasIssue: false },
-    { date: '04/09', vndBuy: 185000000, vndSell: 8893820, phpBuy: 0, phpSell: 0, usdtBuy: 7125.04, usdtSell: 342.07, pVndBuy: 185000000, pVndSell: 8893820, pPhpBuy: 0, pPhpSell: 0, pVnd: 0, pPhp: 0, vIn: 7125.04, vOut: 342.07, vChain: 0, hasIssue: false },
-    { date: '04/08', vndBuy: 265634280, vndBuyNote: 'Lbankpay：2928.90', vndSell: 205171140, phpBuy: 0, phpSell: 0, usdtBuy: 10216.78, usdtSell: 7891.19, pVndBuy: 265634280, pVndSell: 205146140, pPhpBuy: 0, pPhpSell: 0, pVnd: 0, pPhp: 0, vIn: 10216.78, vOut: 7867.69, vChain: 0, hasIssue: false, fixed: true, issue: 'P2P 卖出 vnd 差额 25,000 (待完成 23.5 USDT)' },
-    { date: '04/07', vndBuy: 81338140, vndSell: 308970740, phpBuy: 0, phpSell: 0, usdtBuy: 3128.39, usdtSell: 11883.49, pVndBuy: 81338140, pVndSell: 308970740, pPhpBuy: 0, pPhpSell: 0, pVnd: 78000000, pPhp: 0, vIn: 3128.39, vOut: 11883.49, vChain: 3000, hasIssue: true, issue: '系统划转出账 -60,000 USDT 无关联订单' },
-    { date: '04/06', vndBuy: 274076180, vndSell: 36921300, phpBuy: 0, phpSell: 0, usdtBuy: 10541.43, usdtSell: 1420.05, pVndBuy: 274076180, pVndSell: 36921300, pPhpBuy: 0, pPhpSell: 0, pVnd: 0, pPhp: 0, vIn: 10541.43, vOut: 1420.05, vChain: 0, hasIssue: false }
+    // 04/10 当日 — 量较小 (开盘期)
+    { date: '04/10',
+      vndBuy: 32584710,  vndSell: 18724580,
+      phpBuy: 245820,    phpSell: 132460,
+      usdtBuy: 5645.31,  usdtSell: 3086.92,
+      lvndBuy: 12478540, lvndSell: 0,
+      lphpBuy: 0,        lphpSell: 0,
+      lusdtBuy: 480.87,  lusdtSell: 0,
+      pVndBuy: 32584710, pVndSell: 18724580,
+      pPhpBuy: 245820,   pPhpSell: 132460,
+      pVnd: 0, pPhp: 0,
+      vIn: 5645.31, vOut: 3086.92, vChain: 0,
+      hasIssue: false
+    },
+
+    // 04/09 — 平稳一天
+    { date: '04/09',
+      vndBuy: 184932470, vndSell: 8624580,
+      phpBuy: 145720,    phpSell: 24180,
+      usdtBuy: 9728.21,  usdtSell: 764.15,
+      lvndBuy: 38742510, lvndSell: 8247310,
+      lphpBuy: 0,        lphpSell: 0,
+      lusdtBuy: 1492.97, lusdtSell: 317.81,
+      pVndBuy: 184932470, pVndSell: 8624580,
+      pPhpBuy: 145720,   pPhpSell: 24180,
+      pVnd: 0, pPhp: 0,
+      vIn: 9728.21, vOut: 764.15, vChain: 0,
+      hasIssue: false
+    },
+
+    // 04/08 已平账, 历史异常: P2P 卖出 vnd 差额 -25,000
+    // → pVndSell 比 vndSell 少 25,000
+    { date: '04/08',
+      vndBuy: 245847930, vndSell: 192486140,
+      phpBuy: 216830,    phpSell: 198430,
+      usdtBuy: 13346.10, usdtSell: 10961.35,
+      lvndBuy: 71247830, lvndSell: 23158490,
+      lphpBuy: 18420,    lphpSell: 0,
+      lusdtBuy: 3074.51, lusdtSell: 892.43,
+      pVndBuy: 245847930, pVndSell: 192461140,
+      pPhpBuy: 216830,   pPhpSell: 198430,
+      pVnd: 0, pPhp: 0,
+      vIn: 13346.10, vOut: 10961.35, vChain: 0,
+      hasIssue: false, fixed: true,
+      issue: 'P2P 卖出 vnd 差额 25,000 (待完成 23.5 USDT)'
+    },
+
+    // 04/07 异常: 系统划转出账 -60,000 USDT 无关联订单
+    // → vOut 比 usdtSell 多 60,000
+    // 同日有 链上充值 3,000 USDT, 对应 78,000,000 vnd 紧急补币
+    { date: '04/07',
+      vndBuy: 165278420, vndSell: 289547180,
+      phpBuy: 324580,    phpSell: 156720,
+      usdtBuy: 12165.18, usdtSell: 13956.38,
+      lvndBuy: 62184950, lvndSell: 42576840,
+      lphpBuy: 0,        lphpSell: 0,
+      lusdtBuy: 2396.34, lusdtSell: 1640.73,
+      pVndBuy: 165278420, pVndSell: 289547180,
+      pPhpBuy: 324580,   pPhpSell: 156720,
+      pVnd: 78000000, pPhp: 0,
+      vIn: 12165.18, vOut: 73956.38,
+      vChain: 3000,
+      hasIssue: true,
+      issue: '系统划转出账 -60,000 USDT 无关联订单'
+    },
+
+    // 04/06 — 平稳一天
+    { date: '04/06',
+      vndBuy: 218485310, vndSell: 47123860,
+      phpBuy: 187420,    phpSell: 82540,
+      usdtBuy: 11766.26, usdtSell: 3290.62,
+      lvndBuy: 82438510, lvndSell: 18725400,
+      lphpBuy: 0,        lphpSell: 0,
+      lusdtBuy: 3177.21, lusdtSell: 721.59,
+      pVndBuy: 218485310, pVndSell: 47123860,
+      pPhpBuy: 187420,   pPhpSell: 82540,
+      pVnd: 0, pPhp: 0,
+      vIn: 11766.26, vOut: 3290.62, vChain: 0,
+      hasIssue: false
+    }
   ];
 
+  // 底仓账户流水 (LBA6G57729): buy/sell 同步 recon vIn/vOut, 04/07 sysOut -60,000 为异常
   const vaultData = [
-    { d: '04/10', chain: 0, sell: 0, buy: 0, in: 0, sysOut: 0, write: 0, fb: 0, bal: 75996.42,
-      cd: { done: 0, pend: 0, rem: 0, dp: 0 }, sd: { done: 0, pend: 0, rem: 23.5, dp: 0 }, bd: { done: 0, pend: 0, rem: 0, dp: 0 } },
-    { d: '04/09', chain: 0, sell: -342.07, buy: 7125.04, in: 0, sysOut: 0, write: 0, fb: 0, bal: 75996.42,
-      cd: { done: 0, pend: 0, rem: 0, dp: 0 }, sd: { done: 342.07, pend: 0, rem: 23.5, dp: 0 }, bd: { done: 7125.04, pend: 0, rem: 0, dp: 0 } },
-    { d: '04/08', chain: 0, sell: -7891.19, buy: 10216.78, in: 0, sysOut: 0, write: 0, fb: 0, bal: 69213.45,
-      cd: { done: 0, pend: 0, rem: 0, dp: 0 }, sd: { done: 7867.69, pend: 23.5, rem: 23.5, dp: 12 }, bd: { done: 10216.78, pend: 0, rem: 0, dp: 0 } },
-    { d: '04/07', chain: 3000, sell: -11883.49, buy: 3128.39, in: 0, sysOut: -60000, write: 0, fb: 0, bal: 66887.86,
-      cd: { done: 3000, pend: 0, rem: 0, dp: 0 }, sd: { done: 11883.49, pend: 0, rem: 11.5, dp: 50 }, bd: { done: 3128.39, pend: 0, rem: 0, dp: 0 } },
-    { d: '04/06', chain: 0, sell: -1420.05, buy: 10541.43, in: 0, sysOut: 0, write: 0, fb: 0, bal: 135642.96,
-      cd: { done: 0, pend: 0, rem: 0, dp: 0 }, sd: { done: 1420.05, pend: 0, rem: 61.5, dp: 30 }, bd: { done: 10541.43, pend: 0, rem: 0, dp: 0 } }
+    { d: '04/10', chain: 0, sell: -3086.92, buy: 5645.31, in: 0, sysOut: 0, write: 0, fb: 0, bal: 75996.42,
+      cd: { done: 0, pend: 0, rem: 0, dp: 0 }, sd: { done: 3086.92, pend: 0, rem: 23.5, dp: 0 }, bd: { done: 5645.31, pend: 0, rem: 0, dp: 0 } },
+    { d: '04/09', chain: 0, sell: -764.15, buy: 9728.21, in: 0, sysOut: 0, write: 0, fb: 0, bal: 72957.16,
+      cd: { done: 0, pend: 0, rem: 0, dp: 0 }, sd: { done: 764.15, pend: 0, rem: 23.5, dp: 0 }, bd: { done: 9728.21, pend: 0, rem: 0, dp: 0 } },
+    { d: '04/08', chain: 0, sell: -10961.35, buy: 13346.10, in: 0, sysOut: 0, write: 0, fb: 0, bal: 62817.94,
+      cd: { done: 0, pend: 0, rem: 0, dp: 0 }, sd: { done: 10937.85, pend: 23.5, rem: 23.5, dp: 12 }, bd: { done: 13346.10, pend: 0, rem: 0, dp: 0 } },
+    { d: '04/07', chain: 3000, sell: -13956.38, buy: 12165.18, in: 0, sysOut: -60000, write: 0, fb: 0, bal: 58251.11,
+      cd: { done: 3000, pend: 0, rem: 0, dp: 0 }, sd: { done: 13956.38, pend: 0, rem: 11.5, dp: 50 }, bd: { done: 12165.18, pend: 0, rem: 0, dp: 0 } },
+    { d: '04/06', chain: 0, sell: -3290.62, buy: 11766.26, in: 0, sysOut: 0, write: 0, fb: 0, bal: 116286.70,
+      cd: { done: 0, pend: 0, rem: 0, dp: 0 }, sd: { done: 3290.62, pend: 0, rem: 61.5, dp: 30 }, bd: { done: 11766.26, pend: 0, rem: 0, dp: 0 } }
   ];
 
+  // 平台账户流水: buy/sell 同步 recon pVndBuy/pVndSell, np = pVnd
   const platformData = {
     vnd: [
-      { d: '04/10', buy: 0, sell: 0, np: 0, bal: 258300000, bd: {done:0,pend:0,rem:0,dp:0}, sd: {done:0,pend:0,rem:0,dp:0}, nd: {done:0,pend:0,rem:0,dp:0} },
-      { d: '04/09', buy: 185000000, sell: 8893820, np: 0, bal: 258300000, bd: {done:185000000,pend:0,rem:0,dp:0}, sd: {done:8893820,pend:0,rem:0,dp:0}, nd: {done:0,pend:0,rem:0,dp:0} },
-      { d: '04/08', buy: 265634280, sell: 205146140, np: 0, bal: 82193820, bd: {done:265634280,pend:0,rem:0,dp:0}, sd: {done:205121140,pend:25000,rem:25000,dp:0}, nd: {done:0,pend:0,rem:0,dp:0} },
-      { d: '04/07', buy: 81338140, sell: 308970740, np: 78000000, bal: 21705680, bd: {done:81338140,pend:0,rem:0,dp:0}, sd: {done:308970740,pend:0,rem:0,dp:0}, nd: {done:78000000,pend:0,rem:0,dp:0} },
-      { d: '04/06', buy: 274076180, sell: 36921300, np: 0, bal: 251338280, bd: {done:274076180,pend:0,rem:0,dp:0}, sd: {done:36921300,pend:0,rem:0,dp:0}, nd: {done:0,pend:0,rem:0,dp:0} }
+      { d: '04/10', buy: 32584710,  sell: 18724580,  np: 0,        bal: 285420180,
+        bd: {done:32584710,pend:0,rem:0,dp:0}, sd: {done:18724580,pend:0,rem:0,dp:0}, nd: {done:0,pend:0,rem:0,dp:0} },
+      { d: '04/09', buy: 184932470, sell: 8624580,   np: 0,        bal: 259081510,
+        bd: {done:184932470,pend:0,rem:0,dp:0}, sd: {done:8624580,pend:0,rem:0,dp:0}, nd: {done:0,pend:0,rem:0,dp:0} },
+      { d: '04/08', buy: 245847930, sell: 192461140, np: 0,        bal: 52278420,
+        bd: {done:245847930,pend:0,rem:0,dp:0}, sd: {done:192436140,pend:25000,rem:25000,dp:0}, nd: {done:0,pend:0,rem:0,dp:0} },
+      { d: '04/07', buy: 165278420, sell: 289547180, np: 78000000, bal: -49197710,
+        bd: {done:165278420,pend:0,rem:0,dp:0}, sd: {done:289547180,pend:0,rem:0,dp:0}, nd: {done:78000000,pend:0,rem:0,dp:0} },
+      { d: '04/06', buy: 218485310, sell: 47123860,  np: 0,        bal: 235074560,
+        bd: {done:218485310,pend:0,rem:0,dp:0}, sd: {done:47123860,pend:0,rem:0,dp:0}, nd: {done:0,pend:0,rem:0,dp:0} }
     ],
     php: [
-      { d: '04/10', buy: 0, sell: 0, np: 0, bal: 4820000, bd: {done:0,pend:0,rem:0,dp:0}, sd: {done:0,pend:0,rem:0,dp:0}, nd: {done:0,pend:0,rem:0,dp:0} },
-      { d: '04/09', buy: 0, sell: 0, np: 0, bal: 4820000, bd: {done:0,pend:0,rem:0,dp:0}, sd: {done:0,pend:0,rem:0,dp:0}, nd: {done:0,pend:0,rem:0,dp:0} }
+      { d: '04/10', buy: 245820, sell: 132460, np: 0, bal: 4933360,
+        bd: {done:245820,pend:0,rem:0,dp:0}, sd: {done:132460,pend:0,rem:0,dp:0}, nd: {done:0,pend:0,rem:0,dp:0} },
+      { d: '04/09', buy: 145720, sell: 24180,  np: 0, bal: 4820000,
+        bd: {done:145720,pend:0,rem:0,dp:0}, sd: {done:24180,pend:0,rem:0,dp:0}, nd: {done:0,pend:0,rem:0,dp:0} },
+      { d: '04/08', buy: 216830, sell: 198430, np: 0, bal: 4698460,
+        bd: {done:216830,pend:0,rem:0,dp:0}, sd: {done:198430,pend:0,rem:0,dp:0}, nd: {done:0,pend:0,rem:0,dp:0} },
+      { d: '04/07', buy: 324580, sell: 156720, np: 0, bal: 4661640,
+        bd: {done:324580,pend:0,rem:0,dp:0}, sd: {done:156720,pend:0,rem:0,dp:0}, nd: {done:0,pend:0,rem:0,dp:0} },
+      { d: '04/06', buy: 187420, sell: 82540,  np: 0, bal: 4493780,
+        bd: {done:187420,pend:0,rem:0,dp:0}, sd: {done:82540,pend:0,rem:0,dp:0}, nd: {done:0,pend:0,rem:0,dp:0} }
     ]
   };
+
+  // 盈利计算 mock 数据：每日快照
+  // pl = 盈亏情况；vol = 单日波动；fee = 手续费亏损；spread = 买卖价差；fx = 汇率差异
+  const profitData = [
+    { d: '05/06', credit: 100000, vault: { a: 75996.42, b: 50012.50 }, plat: { vnd: 258300000, php: 4820000 }, rate: { vnd: 25950, php: 56.0 }, pl: -9000, vol: -1.20, fee: -50.20, spread: 200.00, fx: -150.00 },
+    { d: '05/05', credit: 100000, vault: { a: 80324.18, b: 49887.20 }, plat: { vnd: 246800000, php: 4912000 }, rate: { vnd: 26010, php: 56.2 }, pl: 1820, vol: 0.24, fee: -42.10, spread: 320.50, fx: -88.40 },
+    { d: '05/04', credit: 100000, vault: { a: 78905.31, b: 50104.66 }, plat: { vnd: 251300000, php: 4860000 }, rate: { vnd: 25988, php: 56.1 }, pl: -2400, vol: -0.32, fee: -38.80, spread: 156.20, fx: -210.30 },
+    { d: '05/03', credit: 100000, vault: { a: 81022.04, b: 49998.10 }, plat: { vnd: 249100000, php: 4805000 }, rate: { vnd: 25965, php: 56.0 }, pl: 760, vol: 0.10, fee: -31.50, spread: 410.20, fx: -50.10 },
+    { d: '05/02', credit: 100000, vault: { a: 79410.88, b: 50230.55 }, plat: { vnd: 247800000, php: 4820000 }, rate: { vnd: 25940, php: 55.9 }, pl: -3120, vol: -0.41, fee: -45.30, spread: 220.40, fx: -180.20 },
+    { d: '05/01', credit: 100000, vault: { a: 80560.70, b: 50112.30 }, plat: { vnd: 250400000, php: 4830000 }, rate: { vnd: 25975, php: 56.05 }, pl: 540, vol: 0.07, fee: -28.20, spread: 180.10, fx: -75.60 },
+    { d: '04/30', credit: 100000, vault: { a: 78890.10, b: 49980.00 }, plat: { vnd: 252100000, php: 4810000 }, rate: { vnd: 26005, php: 56.15 }, pl: -1230, vol: -0.16, fee: -36.40, spread: 150.30, fx: -120.50 }
+  ];
 
   let linkLeft = [
     { id: 'L1', code: 'LBA9H52363-1192', type: '链上充值入账', amt: 3000, time: '04/27 09:14' },
@@ -487,7 +672,6 @@
     { time: '04/27 14:32', type: '平账', target: 'LBA6G57729-3805', diff: '1.00 USDT', reason: '手续费扣减', op: '李宇', note: '链上 Gas 费' },
     { time: '04/27 11:08', type: '关联', target: 'LBA9-1192 ↔ CV-99820', diff: '3,000 USDT', reason: '紧急补币', op: '李宇', note: '商家无币,VND 直换' },
     { time: '04/26 16:45', type: '平账', target: 'LBA6G57729-3812', diff: '60,000 USDT', reason: '系统划转', op: '李宇', note: '日终划转至冷钱包' },
-    { time: '04/25 10:22', type: '撤销', target: 'LBA6G57729-3700', diff: '—', reason: '误操作', op: '管理员', note: '撤销 04/24 平账' },
     { time: '04/23 18:33', type: '平账', target: 'LBA9H52363-1180', diff: '12.30 USDT', reason: '资产抹除', op: '李宇', note: '坏账核销' }
   ];
 
@@ -523,12 +707,13 @@
   function renderRecon() {
     const tb = document.getElementById('recon-body');
     tb.innerHTML = reconData.map((r, idx) => {
-      const qH = r.pVndBuy - r.vndBuy;
-      const qI = r.pVndSell - r.vndSell;
-      const qJ = r.pPhpBuy - r.phpBuy;
-      const qK = r.pPhpSell - r.phpSell;
-      const qN = r.vIn - r.usdtBuy;
-      const qO = r.vOut - r.usdtSell;
+      // 法币核对 = 平台流水 - P2P订单
+      const qNB = r.pVndBuy  - r.vndBuy;   // N-B
+      const qOC = r.pVndSell - r.vndSell;  // O-C
+      const qPD = r.pPhpBuy  - r.phpBuy;   // P-D
+      const qQE = r.pPhpSell - r.phpSell;  // Q-E
+      const qTF = r.vIn      - r.usdtBuy;  // T-F
+      const qUG = r.vOut     - r.usdtSell; // U-G
       const lp = r.vChain > 0 ? Math.round(r.pVnd / r.vChain) : 0;
       const mp = r.vChain > 0 ? Math.round(r.pPhp / r.vChain) : 0;
       const usdtTotal = r.pVnd / (lp || 1) + r.pPhp / (mp || 1) - r.vChain;
@@ -537,18 +722,24 @@
       const rowStyle = r.hasIssue ? 'background: #FEF3C7;' : '';
       return '<tr class="ex-row clickable ' + sel + ' ' + issueCls + '" data-idx="' + idx + '" style="' + rowStyle + '">' +
         '<td>' + r.date + '</td>' +
+        // P2P 订单
         '<td>' + fmtWithNote(r.vndBuy, r.vndBuyNote) + '</td><td>' + fmtPlain(r.vndSell) + '</td>' +
         '<td>' + fmtPlain(r.phpBuy) + '</td><td>' + fmtPlain(r.phpSell) + '</td>' +
         '<td>' + fmtPlain(r.usdtBuy, 2) + '</td><td>' + fmtPlain(r.usdtSell, 2) + '</td>' +
+        // 平台账户流水 (CVPAY)
         '<td>' + fmtPlain(r.pVndBuy) + '</td><td>' + fmtPlain(r.pVndSell) + '</td>' +
         '<td>' + fmtPlain(r.pPhpBuy) + '</td><td>' + fmtPlain(r.pPhpSell) + '</td>' +
         '<td>' + fmtPlain(r.pVnd) + '</td><td>' + fmtPlain(r.pPhp) + '</td>' +
+        // 底仓
         '<td>' + fmtPlain(r.vIn, 2) + '</td><td>' + fmtPlain(r.vOut, 2) + '</td><td>' + fmtPlain(r.vChain, 2) + '</td>' +
-        '<td>' + checkCell(qH) + '</td><td>' + checkCell(qI) + '</td>' +
-        '<td>' + checkCell(qJ) + '</td><td>' + checkCell(qK) + '</td>' +
-        '<td>' + checkCell(qN) + '</td><td>' + checkCell(qO) + '</td>' +
+        // 法币核对 (N-B, O-C, P-D, Q-E, T-F, U-G)
+        '<td>' + checkCell(qNB) + '</td><td>' + checkCell(qOC) + '</td>' +
+        '<td>' + checkCell(qPD) + '</td><td>' + checkCell(qQE) + '</td>' +
+        '<td>' + checkCell(qTF) + '</td><td>' + checkCell(qUG) + '</td>' +
+        // 链上充值核对
         '<td>' + fmtPlain(r.pVnd) + '</td><td>' + fmtPlain(r.vChain, 2) + '</td><td>' + (lp ? lp.toLocaleString() : '-') + '</td>' +
         '<td>' + fmtPlain(r.pPhp) + '</td><td>' + fmtPlain(r.vChain, 2) + '</td><td>' + (mp ? mp.toLocaleString() : '-') + '</td>' +
+        // USDT 综合 + 状态/操作
         '<td>' + checkCell(usdtTotal) + '</td>' +
         '<td class="col-fixed">' + statusCell(r) + '</td>' +
       '</tr>';
@@ -572,11 +763,12 @@
       '<div style="font-size:12px;color:#DC2626;margin-bottom:10px;">⚠ ' + r.issue + '</div>' +
       '<div style="font-size:12px;font-weight:500;margin-bottom:6px;color:#1F2937;">手动平账</div>' +
       '<table class="ex" style="margin-bottom:10px;"><thead><tr>' +
-        '<th>差异原因</th><th>差异金额</th><th>备注说明</th><th style="width:100px;">操作</th>' +
+        '<th>差异原因</th><th>差异金额</th><th>备注说明</th><th style="min-width:150px;">上传图片</th><th style="width:100px;">操作</th>' +
       '</tr></thead><tbody><tr>' +
-        '<td><select id="fix-reason" style="width:100%;font-size:12px;padding:4px;border:1px solid #E5E7EB;border-radius:3px;"><option>手续费扣减</option><option>系统划转</option><option>紧急补币</option><option>资产抹除</option><option>链上 Gas 费</option><option>其他</option></select></td>' +
+        '<td><input id="fix-reason" type="text" placeholder="请输入差异原因..." style="width:100%;font-size:12px;padding:4px;border:1px solid #E5E7EB;border-radius:3px;" /></td>' +
         '<td><input type="text" value="' + r.issue.match(/[\d,\.]+/)[0] + '" style="width:100%;font-size:12px;padding:4px;border:1px solid #E5E7EB;border-radius:3px;" readonly /></td>' +
         '<td><input id="fix-note" type="text" placeholder="请输入差异说明..." style="width:100%;font-size:12px;padding:4px;border:1px solid #E5E7EB;border-radius:3px;" /></td>' +
+        '<td><input id="fix-image" type="file" accept="image/*" style="width:100%;font-size:12px;" /></td>' +
         '<td><button class="btn btn-primary" onclick="exDoFix()" style="padding:4px 10px;font-size:12px;">确认平账</button></td>' +
       '</tr></tbody></table>' +
       '</div>';
@@ -628,6 +820,54 @@
     }).join('');
   }
 
+  function renderProfit() {
+    const tb = document.getElementById('profit-body');
+    // 单元格着色：>0 绿，<0 红，=0 灰
+    const sgn = (n, d) => {
+      d = d || 2;
+      if (Math.abs(n) < 0.005) return '<span class="ex-cell-zero">-</span>';
+      const cls = n > 0 ? 'ex-cell-pos' : 'ex-cell-neg';
+      const s = n > 0 ? '+' : '';
+      return '<span class="' + cls + '">' + s + n.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }) + '</span>';
+    };
+    const pct = (n) => {
+      if (Math.abs(n) < 0.005) return '<span class="ex-cell-zero">-</span>';
+      const cls = n > 0 ? 'ex-cell-pos' : 'ex-cell-neg';
+      const s = n > 0 ? '+' : '';
+      return '<span class="' + cls + '">' + s + n.toFixed(2) + '%</span>';
+    };
+    tb.innerHTML = profitData.map(p => {
+      return '<tr class="ex-row">' +
+        '<td>' + p.d + '</td>' +
+        '<td>' + fmtPlain(p.credit, 2) + '</td>' +
+        '<td>' + fmtPlain(p.vault.a, 2) + '</td>' +
+        '<td>' + fmtPlain(p.vault.b, 2) + '</td>' +
+        '<td>' + fmtPlain(p.plat.vnd) + '</td>' +
+        '<td>' + fmtPlain(p.plat.php) + '</td>' +
+        '<td>' + p.rate.vnd.toLocaleString() + '</td>' +
+        '<td>' + p.rate.php.toFixed(2) + '</td>' +
+        '<td>' + sgn(p.pl, 2) + '</td>' +
+        '<td>' + pct(p.vol) + '</td>' +
+        '<td>' + sgn(p.fee, 2) + '</td>' +
+        '<td>' + sgn(p.spread, 2) + '</td>' +
+        '<td>' + sgn(p.fx, 2) + '</td>' +
+      '</tr>';
+    }).join('');
+
+    // 汇总
+    const sum = (k) => profitData.reduce((s, x) => s + x[k], 0);
+    const setSum = (id, v, posIsGood) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = (v > 0 ? '+' : '') + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      el.className = (posIsGood ? (v >= 0 ? 'val-pos' : 'val-neg') : (v >= 0 ? 'val-pos' : 'val-neg'));
+    };
+    setSum('profit-sum-pl', sum('pl'), true);
+    setSum('profit-sum-fee', sum('fee'), false);
+    setSum('profit-sum-spread', sum('spread'), true);
+    setSum('profit-sum-fx', sum('fx'), false);
+  }
+
   function renderLink() {
     const lb = document.getElementById('link-left-body');
     lb.innerHTML = linkLeft.map(l => {
@@ -665,7 +905,16 @@
         renderLink(); renderLinkCheck();
       };
     });
+    // 已选数量提示
+    const cnt = document.getElementById('link-right-count');
+    if (cnt) cnt.textContent = selectedRight.size > 0 ? '已选 ' + selectedRight.size + ' 笔' : '';
   }
+
+  window.exToggleAllRight = function() {
+    if (selectedRight.size === linkRight.length) selectedRight = new Set();
+    else selectedRight = new Set(linkRight.map(r => r.id));
+    renderLink(); renderLinkCheck();
+  };
 
   function renderLinkCheck() {
     const box = document.getElementById('link-check');
@@ -718,8 +967,9 @@
 
   function renderLog() {
     const tb = document.getElementById('log-body');
-    const colorMap = { '平账': 'background:#FEF3C7;color:#92400E', '关联': 'background:#DBEAFE;color:#1D4ED8', '撤销': 'background:#FEE2E2;color:#DC2626' };
+    const colorMap = { '平账': 'background:#FEF3C7;color:#92400E', '关联': 'background:#DBEAFE;color:#1D4ED8' };
     tb.innerHTML = logData.map(l => {
+      const imageHtml = l.imageUrl ? '<img class="log-image-preview" src="' + l.imageUrl + '" alt="' + (l.imageName || '平账图片') + '" title="点击查看图片" onclick="window.open(this.src)" />' : '';
       return '<tr>' +
         '<td>' + l.time + '</td>' +
         '<td><span class="ex-pill" style="' + colorMap[l.type] + ';">' + l.type + '</span></td>' +
@@ -727,7 +977,7 @@
         '<td' + (l.diff !== '—' ? ' style="color:#DC2626;"' : '') + '>' + l.diff + '</td>' +
         '<td>' + l.reason + '</td>' +
         '<td>' + l.op + '</td>' +
-        '<td>' + l.note + '</td>' +
+        '<td>' + l.note + imageHtml + '</td>' +
       '</tr>';
     }).join('');
   }
@@ -739,16 +989,57 @@
     setTimeout(() => t.classList.remove('show'), 2000);
   }
 
+  window.exExportTable = function(selector, title) {
+    const target = document.querySelector(selector);
+    const table = target && (target.tagName === 'TABLE' ? target : target.closest('table'));
+    if (!table) {
+      showToast('未找到可导出的列表');
+      return;
+    }
+
+    const clone = table.cloneNode(true);
+    clone.querySelectorAll('input[type="checkbox"]').forEach(input => {
+      const text = document.createTextNode(input.checked ? '已选' : '未选');
+      input.replaceWith(text);
+    });
+    clone.querySelectorAll('button,a,textarea,input,select').forEach(el => {
+      const text = document.createTextNode(el.value || el.textContent || '');
+      el.replaceWith(text);
+    });
+
+    const html = '<html><head><meta charset="UTF-8"></head><body>' +
+      '<table border="1">' + clone.innerHTML + '</table>' +
+      '</body></html>';
+    const blob = new Blob(['\ufeff' + html], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const stamp = new Date().toISOString().slice(0, 10);
+    a.href = url;
+    a.download = title + '_' + stamp + '.xls';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('Excel导出成功');
+  };
+
   window.exDoFix = function() {
     const reason = document.getElementById('fix-reason').value;
     const note = document.getElementById('fix-note').value || '(无备注)';
+    const imageFile = document.getElementById('fix-image').files[0];
+    const imageNote = imageFile ? '；图片：' + imageFile.name : '';
+    const imageUrl = imageFile ? URL.createObjectURL(imageFile) : '';
     const r = reconData[selectedRecon];
     logData.unshift({
       time: '04/27 ' + new Date().toTimeString().slice(0,5),
       type: '平账',
       target: r.date + ' 对账差异',
       diff: r.issue.match(/[\d,\.]+/)[0] + ' USDT',
-      reason, op: '李宇', note
+      reason,
+      op: '李宇',
+      note: note + imageNote,
+      imageName: imageFile ? imageFile.name : '',
+      imageUrl
     });
     r.hasIssue = false;
     r.fixed = true;
@@ -817,6 +1108,7 @@
   renderRecon();
   renderVault();
   renderPlatform();
+  renderProfit();
   renderLink();
   renderLog();
 })();
